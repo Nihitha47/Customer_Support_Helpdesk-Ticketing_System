@@ -9,6 +9,7 @@ const {
 
 const { checkSlaBreach } = require("../controllers/slaController");
 const { addComment, getComments } = require("../controllers/commentController");
+
 const {
     addInternalNote,
     getInternalNotes
@@ -48,7 +49,6 @@ router.post(
     validate,
     createTicket
 );
-
 
 // Check SLA deadline and breach status
 router.get(

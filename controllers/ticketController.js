@@ -4,6 +4,7 @@ const { calculateSlaDeadline } = require("../utils/sla");
 const createTicket = async (req, res, next) => {
     try {
         const { subject, description, category, priority } = req.body;
+
         const selectedPriority = priority || "Medium";
         const createdAt = new Date();
 
@@ -21,7 +22,6 @@ const createTicket = async (req, res, next) => {
             message: "Ticket created successfully",
             ticket
         });
-
     } catch (error) {
         next(error);
     }
@@ -79,15 +79,16 @@ const updateTicketStatus = async (req, res, next) => {
                 message: "Ticket not found"
             });
         }
+
         if (
             req.user.role === "agent" &&
             ticket.assignedAgentId &&
             ticket.assignedAgentId.toString() !== req.user.id.toString()
         ) {
             return res.status(403).json({
-          success: false,
-           message: "You can only update tickets assigned to you"
-         });
+                success: false,
+                message: "You can only update tickets assigned to you"
+            });
         }
 
         const validStatuses = [
@@ -104,7 +105,6 @@ const updateTicketStatus = async (req, res, next) => {
             });
         }
 
-        // Allowed workflow transitions
         const allowedTransitions = {
             "Open": ["In Progress"],
             "In Progress": ["Resolved"],
