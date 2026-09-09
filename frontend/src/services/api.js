@@ -1,4 +1,4 @@
-const API_BASE_URL = '/api';
+const API_BASE_URL = 'https://customer-support-helpdesk-ticketing.onrender.com/api';
 
 // Helper to make API requests with automatic Authorization header
 async function request(endpoint, options = {}) {
