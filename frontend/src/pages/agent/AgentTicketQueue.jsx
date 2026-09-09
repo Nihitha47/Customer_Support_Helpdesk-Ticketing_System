@@ -1,0 +1,235 @@
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { api } from '../../services/api';
+import StatusBadge from '../../components/StatusBadge';
+import PriorityBadge from '../../components/PriorityBadge';
+import SlaBadge from '../../components/SlaBadge';
+import EscalationBadge from '../../components/EscalationBadge';
+import EmptyState from '../../components/EmptyState';
+import { Search, AlertCircle, PlusCircle } from 'lucide-react';
+
+const statusTabs = [
+  { label: 'All', value: '' },
+  { label: 'Open', value: 'Open' },
+  { label: 'In Progress', value: 'In Progress' },
+  { label: 'Resolved', value: 'Resolved' },
+  { label: 'Closed', value: 'Closed' }
+];
+
+export const AgentTicketQueue = () => {
+  const [tickets, setTickets] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [priorityFilter, setPriorityFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [scope, setScope] = useState('assigned');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const res = await api.categories.getAll();
+        if (res.success) {
+          setCategories(res.categories || []);
+        }
+      } catch (err) {
+        console.warn('Categories unavailable', err.message);
+      }
+    };
+    loadCategories();
+  }, []);
+
+  useEffect(() => {
+    const fetchTickets = async () => {
+      setLoading(true);
+      try {
+        const params = {
+          sortBy: 'createdAt',
+          sortOrder: 'desc',
+          limit: 100
+        };
+
+        if (statusFilter) params.status = statusFilter;
+        if (priorityFilter) params.priority = priorityFilter;
+        if (categoryFilter) params.category = categoryFilter;
+        if (searchTerm) params.search = searchTerm;
+        if (scope === 'unassigned') params.scope = 'unassigned';
+        if (scope === 'all') params.scope = 'all';
+
+        const res = await api.tickets.list(params);
+        if (res.success) {
+          setTickets(res.tickets || []);
+        }
+      } catch (err) {
+        setError(err.message || 'Failed to load queue');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTickets();
+  }, [statusFilter, priorityFilter, categoryFilter, scope, searchTerm]);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">Ticket Queue</h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Manage active support requests and prioritize work by SLA and urgency.</p>
+        </div>
+      </div>
+
+      {error && (
+        <div className="flex items-center gap-2 p-3 text-sm text-rose-800 bg-rose-50 border border-rose-200 rounded-md">
+          <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      <div className="bg-white rounded-lg border border-slate-200 p-4 space-y-4">
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setScope('assigned')}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium ${scope === 'assigned' ? 'bg-[#eaf1ea] text-[#1e311e]' : 'bg-slate-100 text-slate-600'}`}
+          >
+            My Assigned
+          </button>
+          <button
+            type="button"
+            onClick={() => setScope('unassigned')}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium ${scope === 'unassigned' ? 'bg-[#eaf1ea] text-[#1e311e]' : 'bg-slate-100 text-slate-600'}`}
+          >
+            Unassigned Open
+          </button>
+          <button
+            type="button"
+            onClick={() => setScope('all')}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium ${scope === 'all' ? 'bg-[#eaf1ea] text-[#1e311e]' : 'bg-slate-100 text-slate-600'}`}
+          >
+            Full Queue
+          </button>
+        </div>
+
+        <div className="flex items-center gap-1 border-b border-slate-100 pb-3 overflow-x-auto">
+          {statusTabs.map((tab) => (
+            <button
+              key={tab.label}
+              type="button"
+              onClick={() => setStatusFilter(tab.value)}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap ${statusFilter === tab.value ? 'bg-[#eaf1ea] text-[#1e311e]' : 'text-slate-600 hover:bg-slate-50'}`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by subject or description..."
+              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-md border border-slate-300 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#284428] focus:border-[#284428]"
+            />
+          </div>
+
+          <select
+            value={priorityFilter}
+            onChange={(e) => setPriorityFilter(e.target.value)}
+            className="px-2.5 py-1.5 text-xs rounded-md border border-slate-300 text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-[#284428]"
+          >
+            <option value="">All Priorities</option>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+            <option value="Urgent">Urgent</option>
+          </select>
+
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="px-2.5 py-1.5 text-xs rounded-md border border-slate-300 text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-[#284428]"
+          >
+            <option value="">All Categories</option>
+            {categories.map((category) => (
+              <option key={category._id} value={category.name}>{category.name}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+        {loading ? (
+          <div className="flex items-center justify-center p-12">
+            <div className="w-8 h-8 border-3 border-[#284428] border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : tickets.length === 0 ? (
+          <div className="p-8">
+            <EmptyState
+              title="No tickets found"
+              description="There are no tickets matching the selected queue and filters."
+              actionLabel={statusFilter || priorityFilter || categoryFilter || searchTerm ? 'Clear Filters' : 'Open Queue'}
+              onAction={() => {
+                if (statusFilter || priorityFilter || categoryFilter || searchTerm) {
+                  setStatusFilter('');
+                  setPriorityFilter('');
+                  setCategoryFilter('');
+                  setSearchTerm('');
+                } else {
+                  setScope('assigned');
+                }
+              }}
+            />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs sm:text-sm text-slate-600">
+              <thead className="bg-slate-50 text-slate-700 font-semibold uppercase text-[11px] tracking-wider border-b border-slate-200">
+                <tr>
+                  <th className="py-3 px-4">Subject</th>
+                  <th className="py-3 px-4">Customer</th>
+                  <th className="py-3 px-4">Category</th>
+                  <th className="py-3 px-4">Priority</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4">SLA</th>
+                  <th className="py-3 px-4 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {tickets.map((ticket) => (
+                  <tr key={ticket._id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="py-3 px-4 font-medium text-slate-900">
+                      <div className="flex items-center gap-2">
+                        <Link to={`/agent/tickets/${ticket._id}`} className="hover:underline truncate max-w-[220px] sm:max-w-xs">
+                          {ticket.subject}
+                        </Link>
+                        <EscalationBadge isEscalated={ticket.isEscalated} escalationStatus={ticket.escalationStatus} level={ticket.escalationLevel} />
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">{ticket.customerId?.name || 'Customer'}</td>
+                    <td className="py-3 px-4">{ticket.category}</td>
+                    <td className="py-3 px-4"><PriorityBadge priority={ticket.priority} /></td>
+                    <td className="py-3 px-4"><StatusBadge status={ticket.status} /></td>
+                    <td className="py-3 px-4"><SlaBadge slaDeadline={ticket.slaDeadline} slaBreached={ticket.slaBreached} resolvedAt={ticket.resolvedAt} status={ticket.status} /></td>
+                    <td className="py-3 px-4 text-right">
+                      <Link to={`/agent/tickets/${ticket._id}`} className="text-xs font-semibold text-[#284428] hover:underline">
+                        Manage
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default AgentTicketQueue;

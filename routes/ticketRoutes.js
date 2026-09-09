@@ -4,7 +4,14 @@ const { body } = require("express-validator");
 const {
     createTicket,
     assignTicket,
-    updateTicketStatus
+    updateTicketStatus,
+    getTickets,
+    getTicketById,
+    updateTicketPriority,
+    escalateTicket,
+    reviewEscalation,
+    submitSatisfactionRating,
+    getSatisfactionRating
 } = require("../controllers/ticketController");
 
 const { checkSlaBreach } = require("../controllers/slaController");
@@ -20,6 +27,13 @@ const validate = require("../middleware/validate");
 const authorizeRoles = require("../middleware/role");
 
 const router = express.Router();
+
+// List tickets with role-based scoping and filters
+router.get(
+    "/",
+    protect,
+    getTickets
+);
 
 // Create a new ticket
 router.post(
@@ -48,6 +62,13 @@ router.post(
     ],
     validate,
     createTicket
+);
+
+// Get single ticket details
+router.get(
+    "/:id",
+    protect,
+    getTicketById
 );
 
 // Check SLA deadline and breach status
@@ -101,7 +122,7 @@ router.get(
     getInternalNotes
 );
 
-// Assign ticket to an agent
+// Assign ticket to an agent (Manager only)
 router.put(
     "/:id/assign",
     protect,
@@ -117,7 +138,7 @@ router.put(
     assignTicket
 );
 
-// Update ticket status
+// Update ticket status (Agent assigned or Manager)
 router.put(
     "/:id/status",
     protect,
@@ -131,6 +152,67 @@ router.put(
     ],
     validate,
     updateTicketStatus
+);
+
+// Update ticket priority (Manager only)
+router.put(
+    "/:id/priority",
+    protect,
+    authorizeRoles("manager"),
+    [
+        body("priority")
+            .notEmpty()
+            .withMessage("Priority is required")
+            .isIn(["Low", "Medium", "High", "Urgent"])
+            .withMessage("Invalid priority")
+    ],
+    validate,
+    updateTicketPriority
+);
+
+// Escalate ticket (Customer for own ticket, Agent assigned, or Manager)
+router.post(
+    "/:id/escalate",
+    protect,
+    [
+        body("reason")
+            .trim()
+            .notEmpty()
+            .withMessage("Escalation reason is required")
+    ],
+    validate,
+    escalateTicket
+);
+
+// Review escalation (Manager only)
+router.put(
+    "/:id/escalation-review",
+    protect,
+    authorizeRoles("manager"),
+    reviewEscalation
+);
+
+// Submit satisfaction rating (Customer only)
+router.post(
+    "/:id/satisfaction",
+    protect,
+    authorizeRoles("customer"),
+    [
+        body("rating")
+            .notEmpty()
+            .withMessage("Rating is required")
+            .isInt({ min: 1, max: 5 })
+            .withMessage("Rating must be an integer between 1 and 5")
+    ],
+    validate,
+    submitSatisfactionRating
+);
+
+// Get satisfaction rating
+router.get(
+    "/:id/satisfaction",
+    protect,
+    getSatisfactionRating
 );
 
 module.exports = router;

@@ -63,11 +63,64 @@ const ticketSchema = new mongoose.Schema(
         resolvedAt: {
             type: Date,
             default: null
-        }
+        },
+
+        // Escalation tracking
+        isEscalated: {
+            type: Boolean,
+            default: false
+        },
+
+        escalationLevel: {
+            type: Number,
+            default: 0
+        },
+
+        escalationStatus: {
+            type: String,
+            enum: ["None", "Pending Review", "Under Review", "Escalated", "Resolved"],
+            default: "None"
+        },
+
+        escalationReason: {
+            type: String,
+            default: null
+        },
+
+        escalatedAt: {
+            type: Date,
+            default: null
+        },
+
+        escalatedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            default: null
+        },
+
+        escalationHistory: [
+            {
+                level: { type: Number, default: 1 },
+                status: { type: String, default: "Escalated" },
+                reason: { type: String },
+                escalatedAt: { type: Date, default: Date.now },
+                escalatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+                note: { type: String },
+                action: { type: String }
+            }
+        ]
     },
     {
         timestamps: true
     }
 );
+
+ticketSchema.index({ customerId: 1 });
+ticketSchema.index({ assignedAgentId: 1 });
+ticketSchema.index({ status: 1 });
+ticketSchema.index({ priority: 1 });
+ticketSchema.index({ category: 1 });
+ticketSchema.index({ isEscalated: 1 });
+ticketSchema.index({ slaBreached: 1 });
 
 module.exports = mongoose.model("Ticket", ticketSchema);

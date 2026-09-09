@@ -1,6 +1,14 @@
 const express = require("express");
 const { body } = require("express-validator");
-const { registerUser, loginUser } = require("../controllers/authController");
+const {
+    registerUser,
+    loginUser,
+    getMe,
+    getAgents,
+    seedInitialData
+} = require("../controllers/authController");
+const protect = require("../middleware/auth");
+const authorizeRoles = require("../middleware/role");
 const validate = require("../middleware/validate");
 
 const router = express.Router();
@@ -42,4 +50,26 @@ router.post(
     validate,
     loginUser
 );
+
+// Get current user profile
+router.get(
+    "/me",
+    protect,
+    getMe
+);
+
+// Get agents list (Manager or Agent)
+router.get(
+    "/agents",
+    protect,
+    authorizeRoles("agent", "manager"),
+    getAgents
+);
+
+// Seed initial roles/categories helper
+router.post(
+    "/seed",
+    seedInitialData
+);
+
 module.exports = router;

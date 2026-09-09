@@ -1,8 +1,13 @@
 const express = require("express");
+const cors = require("cors");
+const path = require("path");
+const fs = require("fs");
 const dotenv = require("dotenv");
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const ticketRoutes = require("./routes/ticketRoutes");
+const categoryRoutes = require("./routes/categoryRoutes");
+const analyticsRoutes = require("./routes/analyticsRoutes");
 const protect = require("./middleware/auth");
 
 dotenv.config();
@@ -10,24 +15,28 @@ dotenv.config();
 const app = express();
 
 // Middleware
+app.use(cors());
 app.use(express.json());
 
 // Connect to MongoDB
 connectDB();
 
-// Routes
+// API Routes
 app.use("/api/auth", authRoutes);
-
 app.use("/api/tickets", ticketRoutes);
+app.use("/api/categories", categoryRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
-// Test route
-app.get("/", (req, res) => {
+// Test API status route
+app.get("/api/health", (req, res) => {
     res.json({
-        message: "Customer Support Helpdesk API is running"
+        success: true,
+        message: "Customer Support Helpdesk API is running",
+        timestamp: new Date()
     });
 });
 
-// Protected test route
+// Protected test route (preserved from original)
 app.get("/api/protected", protect, (req, res) => {
     res.json({
         success: true,
@@ -35,6 +44,22 @@ app.get("/api/protected", protect, (req, res) => {
         user: req.user
     });
 });
+
+// Serve frontend build in production or if build directory exists
+const frontendDist = path.join(__dirname, "frontend", "dist");
+if (fs.existsSync(frontendDist)) {
+    app.use(express.static(frontendDist));
+    app.get(/^(?!\/api).+$/, (req, res) => {
+        res.sendFile(path.join(frontendDist, "index.html"));
+    });
+} else {
+    // Preserve original root endpoint when frontend dist is not built yet
+    app.get("/", (req, res) => {
+        res.json({
+            message: "Customer Support Helpdesk API is running"
+        });
+    });
+}
 
 // Centralized error handler
 const errorHandler = require("./middleware/errorHandler");
