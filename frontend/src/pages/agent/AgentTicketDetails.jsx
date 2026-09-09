@@ -5,8 +5,14 @@ import StatusBadge from '../../components/StatusBadge';
 import PriorityBadge from '../../components/PriorityBadge';
 import SlaBadge from '../../components/SlaBadge';
 import EscalationBadge from '../../components/EscalationBadge';
-import { AlertCircle, ArrowLeft, MessageSquare, NotebookPen, Send } from 'lucide-react';
-
+import {
+  AlertCircle,
+  ArrowLeft,
+  MessageSquare,
+  NotebookPen,
+  Send,
+  AlertTriangle
+} from 'lucide-react';
 export const AgentTicketDetails = () => {
   const { id } = useParams();
   const [ticket, setTicket] = useState(null);
@@ -20,7 +26,7 @@ export const AgentTicketDetails = () => {
   const [submittingNote, setSubmittingNote] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [error, setError] = useState('');
-
+  const [escalationReason, setEscalationReason] = useState('');
   const loadTicketData = async () => {
     try {
       const [ticketRes, commentsRes, notesRes] = await Promise.all([
@@ -94,6 +100,25 @@ export const AgentTicketDetails = () => {
       setUpdatingStatus(false);
     }
   };
+  const handleEscalate = async () => {
+  if (!escalationReason.trim()) {
+    setError('Please enter a reason for escalation');
+    return;
+  }
+
+  setError('');
+
+  try {
+    const res = await api.tickets.escalate(id, escalationReason);
+
+    if (res.success && res.ticket) {
+      setTicket(res.ticket);
+      setEscalationReason('');
+    }
+  } catch (err) {
+    setError(err.message || 'Failed to escalate ticket');
+  }
+};
 
   if (loading) {
     return (
@@ -160,6 +185,33 @@ export const AgentTicketDetails = () => {
               {updatingStatus ? 'Updating...' : 'Update Status'}
             </button>
           </div>
+        </div>
+
+        <div className="px-6 py-4 border-b border-slate-100 bg-orange-50/30">
+          <div className="flex items-center gap-2 mb-3">
+            <AlertTriangle className="w-5 h-5 text-orange-500" />
+            <h3 className="text-sm font-semibold text-slate-800">
+              Escalate Ticket
+            </h3>
+          </div>
+
+          <textarea
+            value={escalationReason}
+            onChange={(e) => setEscalationReason(e.target.value)}
+            placeholder="Enter reason for escalation..."
+            rows={3}
+            className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+          />
+
+          <button
+            type="button"
+            onClick={handleEscalate}
+            disabled={!escalationReason.trim()}
+            className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 disabled:opacity-50"
+          >
+            <AlertTriangle className="w-4 h-4" />
+            Escalate Ticket
+          </button>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-6 border-b border-slate-100">

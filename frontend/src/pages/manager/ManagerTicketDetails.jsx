@@ -71,6 +71,28 @@ export const ManagerTicketDetails = () => {
       setSaving(false);
     }
   };
+    const handleAssign = async () => {
+    if (!reassignAgentId) {
+      setError('Please select an agent to assign');
+      return;
+    }
+
+    setSaving(true);
+    setError('');
+
+    try {
+      const res = await api.tickets.assign(id, reassignAgentId);
+
+      if (res.success && res.ticket) {
+        setTicket(res.ticket);
+        setReassignAgentId('');
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to assign ticket');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -162,6 +184,21 @@ export const ManagerTicketDetails = () => {
               ))}
             </select>
           </div>
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1">
+              Assign Agent
+            </label>
+
+            <button
+                 type="button"
+               onClick={handleAssign}
+               disabled={saving || !reassignAgentId}
+               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-xs font-semibold text-white bg-[#284428] hover:bg-[#1e311e] disabled:opacity-50"
+             >
+               <CheckCircle2 className="w-3.5 h-3.5" />
+               {saving ? 'Assigning...' : 'Assign Ticket'}
+               </button>
+              </div>
 
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1">Manager Note</label>
