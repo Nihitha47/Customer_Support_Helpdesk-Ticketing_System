@@ -367,15 +367,14 @@ https://customer-support-helpdesk-ticketing.onrender.com
 The repository also contains a companion React frontend under:
 
 `/frontend`
-
 ## Project Team
 
-  Student          Register No.
-  ---------------- --------------
-  George Thomas    2462072
-  Femi K E         2462069
-  Gokulakrishnan   2462075
-  Gutha Nihitha    2463021
+| Team Member | Register Number |
+|-------------|-----------------|
+| George Thomas | 2462072 |
+| Femi K E | 2462069 |
+| Gokulakrishnan | 2462075 |
+| Gutha Nihitha | 2463021 |
 
 ## Important Notes
 
