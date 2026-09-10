@@ -261,7 +261,7 @@ cd Customer_Support_Helpdesk-Ticketing_System
 ### 2. Install backend dependencies
 
 ``` bash
-node server.js
+npm install
 ```
 
 ### 3. Configure environment variables
@@ -281,7 +281,7 @@ Do not commit `.env` to GitHub.
 ### 4. Start the backend
 
 ``` bash
-npm start
+node server.js
 ```
 
 The API will run on the configured port.
@@ -353,7 +353,6 @@ The project implements several security practices:
 -   `.env` excluded through `.gitignore`
 -   Centralized error handling
 
-## Deployment
 
 ## Deployment
 
