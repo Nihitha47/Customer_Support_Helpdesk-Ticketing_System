@@ -355,13 +355,19 @@ The project implements several security practices:
 
 ## Deployment
 
-The backend was deployed on Render and verified using Postman.
+## Deployment
+
+The backend is deployed on Render and verified using Postman.
+
+### Live Application
+https://p14-helpdesk-frontend.onrender.com
+
+### Backend API
+https://customer-support-helpdesk-ticketing.onrender.com
 
 The repository also contains a companion React frontend under:
 
-``` text
-/frontend
-```
+`/frontend`
 
 ## Project Team
 
