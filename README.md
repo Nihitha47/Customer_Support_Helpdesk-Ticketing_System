@@ -261,7 +261,7 @@ cd Customer_Support_Helpdesk-Ticketing_System
 ### 2. Install backend dependencies
 
 ``` bash
-npm install
+node server.js
 ```
 
 ### 3. Configure environment variables
